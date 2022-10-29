@@ -6,13 +6,14 @@ const Header = styled.div`
   display: flex;
   height: 30px;
   color: white;
-  font-size: 16px;
+  font-size: 13px;
   text-align: center;
   font-family: 'Press Start 2P';
   text-shadow: 3px 3px 0px #2038ec;
   margin: 4px;
   justify-content: center;
   align-items:center;
+  padding-left: 4px;
 `
 const ChatContainer = styled.div` 
   margin: auto;
@@ -65,7 +66,7 @@ const Popup = () => {
   return (
     <div className="App">
       <Header>
-        wi<Red>z</Red>ard <Red className='K'>k</Red>ingdom
+        wi<Red>Z</Red>ard <Red>K</Red>ingdom chat
       <img className="Logo" src='https://i.imgur.com/Y6TQvTC.png' width="25" height="25"></img>
       </Header>
       <ChatContainer>
