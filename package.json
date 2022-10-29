@@ -1,11 +1,11 @@
 {
-  "name": "chrome-extension-boilerplate-react",
-  "version": "4.3.5",
-  "description": "A chrome extension boilerplate built with React 17, Webpack 5, and Webpack Dev Server 4",
+  "name": "zk-chat",
+  "version": "0.0.1",
+  "description": "wizard kingdom",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/lxieyang/chrome-extension-boilerplate-react.git"
+    "url": "https://github.com/kayleegeorge/zk-chat.git"
   },
   "scripts": {
     "build": "node utils/build.js",
@@ -16,7 +16,8 @@
     "@hot-loader/react-dom": "^17.0.2",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
-    "react-hot-loader": "^4.13.0"
+    "react-hot-loader": "^4.13.0",
+    "styled-components": "^5.3.6"
   },
   "devDependencies": {
     "@babel/core": "^7.17.0",
@@ -26,6 +27,7 @@
     "@types/chrome": "^0.0.177",
     "@types/react": "^17.0.39",
     "@types/react-dom": "^17.0.11",
+    "@types/styled-components": "^5.1.26",
     "babel-eslint": "^10.1.0",
     "babel-loader": "^8.2.3",
     "babel-preset-react-app": "^10.0.1",
