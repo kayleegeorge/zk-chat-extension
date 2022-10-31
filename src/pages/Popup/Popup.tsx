@@ -1,6 +1,7 @@
 import React from 'react'
 import './Popup.css';
 import styled from 'styled-components'
+import { waku as Waku } from 'js-waku';
 
 const Header = styled.div`
   display: flex;
@@ -58,11 +59,33 @@ const SendButton = styled.button`
     background-color: #1b31d1;
   }
 `
-const Red = styled.text`
+const Red = styled.p`
   color: red;
 `
 
 const Popup = () => {
+  const [waku, setWaku] = React.useState(undefined);
+  const [wakuStatus, setWakuStatus] = React.useState("None");
+
+  // Start Waku
+  React.useEffect(() => {
+    // If Waku is already assigned, the job is done
+    if (!!waku) return;
+    // If Waku status not None, it means we are already starting Waku
+    if (wakuStatus !== "None") return;
+
+    setWakuStatus("Starting");
+
+    // Create Waku
+    Waku.create({ bootstrap: { default: true } }).then(waku => {
+      // Once done, put it in the state
+      setWaku(waku);
+      // And update the status
+      setWakuStatus("Started");
+    });
+  }, [waku, wakuStatus]);
+
+  console.log("Waku node status: " + wakuStatus);
   return (
     <div className="App">
       <Header>
@@ -76,8 +99,7 @@ const Popup = () => {
           <SendButton>Send</SendButton>
         </InputBox>
       </ChatContainer>
-      
-      
+
     </div>
   );
 };

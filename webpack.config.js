@@ -6,6 +6,9 @@ var webpack = require('webpack'),
   HtmlWebpackPlugin = require('html-webpack-plugin'),
   TerserPlugin = require('terser-webpack-plugin');
 var { CleanWebpackPlugin } = require('clean-webpack-plugin');
+//const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
+const { ESBuildMinifyPlugin } = require('esbuild-loader');
+
 
 const ASSET_PATH = process.env.ASSET_PATH || '/';
 
@@ -49,6 +52,15 @@ var options = {
     path: path.resolve(__dirname, 'build'),
     clean: true,
     publicPath: ASSET_PATH,
+  },
+  resolve: {
+    extensions: ['.ts', '.tsx', '.js', '.json'],
+    fallback: {
+        "buffer": require.resolve("buffer/"),
+        "crypto": require.resolve("crypto-browserify"),
+        "stream": require.resolve("stream-browserify"),
+        "assert": require.resolve("assert")
+    }
   },
   module: {
     rules: [
@@ -98,6 +110,25 @@ var options = {
         ],
         exclude: /node_modules/,
       },
+      {
+        test: /\.tsx?$/,
+        loader: 'esbuild-loader',
+        exclude: /node_modules/,
+        options: {
+            loader: 'tsx',
+            target: 'es2020',
+        },
+    },
+    {
+        enforce: 'pre',
+        test: /\.js$/,
+        exclude: /node_modules/,
+        loader: 'source-map-loader'
+    },
+    {
+        test: /\.(png|svg|jpg|gif|woff|woff2|eot|ttf|otf|ico)$/,
+        use: ['file-loader'],
+    },
     ],
   },
   resolve: {
@@ -107,6 +138,11 @@ var options = {
       .concat(['.js', '.jsx', '.ts', '.tsx', '.css']),
   },
   plugins: [
+    //new ForkTsCheckerWebpackPlugin(),
+    new webpack.ProvidePlugin({
+        process: 'process/browser.js',
+        Buffer: ['buffer', 'Buffer'],
+    }),
     new CleanWebpackPlugin({ verbose: false }),
     new webpack.ProgressPlugin(),
     // expose and write the allowed env vars on the compiled bundle
@@ -164,6 +200,25 @@ var options = {
   infrastructureLogging: {
     level: 'info',
   },
+  optimization: {
+    minimizer: [
+        new ESBuildMinifyPlugin({
+            target: 'es2020',
+        }),
+    ],
+  },
+  devtool: 'source-map',
+  devServer: {
+    historyApiFallback: true,
+    host: '0.0.0.0',
+    hot: true,
+    client: {
+        overlay: true,
+    },
+    devMiddleware: {
+        stats: 'errors-only',
+    }
+  }
 };
 
 if (env.NODE_ENV === 'development') {
