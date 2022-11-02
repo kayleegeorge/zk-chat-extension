@@ -1,7 +1,14 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import './Popup.css';
 import styled from 'styled-components'
-import { waku as Waku } from 'js-waku';
+import type { WakuLight } from "js-waku/lib/interfaces";
+import {
+  Fleet,
+  getPredefinedBootstrapNodes,
+} from "js-waku/lib/predefined_bootstrap_nodes";
+import { createLightNode } from "js-waku/lib/create_waku";
+import { PeerDiscoveryStaticPeers } from "js-waku/lib/peer_discovery_static_list";
+
 
 const Header = styled.div`
   display: flex;
@@ -63,29 +70,24 @@ const Red = styled.p`
   color: red;
 `
 
-const Popup = () => {
-  const [waku, setWaku] = React.useState(undefined);
-  const [wakuStatus, setWakuStatus] = React.useState("None");
+export default function Popup() {
+  // might want to put this is in a mainpage function component
+  // const { activate, deactivate, account, provider } = useWeb3Connect(SUPPORTED_CHAIN_ID);
+    
+  // set up waku instance
+  const [waku, setWaku] = useState<WakuLight | undefined>(undefined);
+  useEffect(() => {
+    initWaku()
+      .then(() => {
+        setWaku(waku);
+        console.log("Waku init done");
+      })
+      .catch((e) => console.log("Waku init failed ", e));
+  }, []);
 
-  // Start Waku
-  React.useEffect(() => {
-    // If Waku is already assigned, the job is done
-    if (!!waku) return;
-    // If Waku status not None, it means we are already starting Waku
-    if (wakuStatus !== "None") return;
+  // set up messaging
+  const [message, setMessage] = useState('');
 
-    setWakuStatus("Starting");
-
-    // Create Waku
-    Waku.create({ bootstrap: { default: true } }).then(waku => {
-      // Once done, put it in the state
-      setWaku(waku);
-      // And update the status
-      setWakuStatus("Started");
-    });
-  }, [waku, wakuStatus]);
-
-  console.log("Waku node status: " + wakuStatus);
   return (
     <div className="App">
       <Header>
@@ -95,7 +97,12 @@ const Popup = () => {
       <ChatContainer>
           <ChatBox></ChatBox>
         <InputBox>
-          <MsgInput></MsgInput>
+          <MsgInput
+            name="message"
+            type="text"
+            value={message}
+            onChange={() => setMessage(message)} 
+          />
           <SendButton>Send</SendButton>
         </InputBox>
       </ChatContainer>
@@ -104,4 +111,32 @@ const Popup = () => {
   );
 };
 
-export default Popup;
+
+/* TODO: Move Waku helper functions */
+// initializes waku instance
+async function initWaku() {
+  try {
+    const waku = await createLightNode({
+      libp2p: {
+        // TODO: spawn Waku node when you connect to the site (websockets?)
+        peerDiscovery: [
+          new PeerDiscoveryStaticPeers(
+            getPredefinedBootstrapNodes(selectFleetEnv())
+          ),
+        ],
+      },
+    });
+    await waku.start();
+  } catch (e) {
+    console.log("Issue starting waku ", e);
+  }
+}
+
+function selectFleetEnv() {
+  // Works with react-scripts
+  if (process?.env?.NODE_ENV === "development") {
+    return Fleet.Test;
+  } else {
+    return Fleet.Prod;
+  }
+}
