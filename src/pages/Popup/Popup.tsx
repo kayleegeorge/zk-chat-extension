@@ -8,7 +8,10 @@ import {
 } from "js-waku/lib/predefined_bootstrap_nodes";
 import { createLightNode } from "js-waku/lib/create_waku";
 import { PeerDiscoveryStaticPeers } from "js-waku/lib/peer_discovery_static_list";
-
+import protobuf from "protobufjs";
+import { DecoderV0, EncoderV0 } from "js-waku/lib/waku_message/version_0";
+import { Waku } from 'js-waku/lib/interfaces';
+import { SendResult } from 'js-waku/lib/interfaces';
 
 const Header = styled.div`
   display: flex;
@@ -70,16 +73,29 @@ const Red = styled.p`
   color: red;
 `
 
+/* set up messaging types */
+// use different content names (e.g. 'private message') for diff topics
+const ContentTopic = '/zk-chat/1/chat/proto';
+const Encoder = new EncoderV0(ContentTopic);
+const Decoder = new DecoderV0(ContentTopic);
+
+const SimpleChatMessage = new protobuf.Type("SimpleChatMessage")
+.add(new protobuf.Field("timestamp", 1, "uint64"))
+.add(new protobuf.Field("text", 2, "string"));
+
 export default function Popup() {
   // might want to put this is in a mainpage function component
   // const { activate, deactivate, account, provider } = useWeb3Connect(SUPPORTED_CHAIN_ID);
     
   // set up waku instance
-  const [waku, setWaku] = useState<WakuLight | undefined>(undefined);
+  const [waku, setWaku] = useState<Waku | undefined>(undefined);
+  const [wakuStatus, setWakuStatus] = useState<string>('None');
+
   useEffect(() => {
     initWaku()
       .then(() => {
         setWaku(waku);
+        setWakuStatus('Ready')
         console.log("Waku init done");
       })
       .catch((e) => console.log("Waku init failed ", e));
@@ -87,6 +103,13 @@ export default function Popup() {
 
   // set up messaging
   const [message, setMessage] = useState('');
+  const sendMessageOnClick = () => {
+    // check waku started/connected
+    if (wakuStatus !== 'Ready' || !waku) return;
+
+    const messageSent = sendMessage(message, waku, new Date())
+    if (messageSent) messageSent.then(() => console.log('Message sent'));
+  }
 
   return (
     <div className="App">
@@ -103,7 +126,10 @@ export default function Popup() {
             value={message}
             onChange={() => setMessage(message)} 
           />
-          <SendButton>Send</SendButton>
+          <SendButton
+            onClick={sendMessageOnClick}
+            disabled={wakuStatus !== "Ready"}
+          >Send</SendButton>
         </InputBox>
       </ChatContainer>
 
@@ -127,6 +153,7 @@ async function initWaku() {
       },
     });
     await waku.start();
+    await waitForRemotePeer(waku, ["relay"]);
   } catch (e) {
     console.log("Issue starting waku ", e);
   }
@@ -140,3 +167,25 @@ function selectFleetEnv() {
     return Fleet.Prod;
   }
 }
+//message: string, waku: WakuLight, timestamp: Date
+function sendMessage(message: string, waku: Waku, timestamp: Date):Promise<SendResult> | undefined {
+  const time = timestamp.getTime();
+
+  // Encode to protobuf
+  const protoMsg = SimpleChatMessage.create({
+    timestamp: time,
+    text: message,
+  });
+  const payload = SimpleChatMessage.encode(protoMsg).finish();
+  if (!waku.relay) {
+    console.log('error');
+    return;
+  }
+
+  // Send over Waku Relay
+  return waku.relay.send(Encoder, { payload });
+}
+function waitForRemotePeer(waku: WakuLight, arg1: string[]) {
+  throw new Error('Function not implemented.');
+}
+
