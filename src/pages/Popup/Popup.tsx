@@ -168,7 +168,7 @@ function selectFleetEnv() {
   }
 }
 //message: string, waku: WakuLight, timestamp: Date
-function sendMessage(message: string, waku: Waku, timestamp: Date):Promise<SendResult> | undefined {
+function sendMessage(message: string, waku: Waku, timestamp: Date): Promise<SendResult> | undefined {
   const time = timestamp.getTime();
 
   // Encode to protobuf
